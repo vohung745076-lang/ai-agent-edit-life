@@ -146,10 +146,10 @@ function render() {
   $("#n-projects").textContent = waitingP || "";
   $("#n-styles").textContent = waitingS || "";
 
-  renderHomeLive(running);
-  renderProjects();
-  renderStyles();
-  renderJobs();
+  safe(renderHomeLive, running);
+  safe(renderProjects);
+  safe(renderStyles);
+  safe(renderJobs);
 }
 
 function renderHomeLive(running) {
@@ -177,7 +177,9 @@ function renderProjects() {
   const vids = (p.outputs || []).slice().reverse();
   const latest = vids.filter((o) => !p.version || new RegExp(`v${p.version}\\b`).test(o.file + o.label));
   const show = latest.length ? latest : vids.slice(0, 2);
-  const used = (p.styles_used || []).map((u) => `${esc(u.style)}${u.techniques?.length ? ": " + esc(u.techniques.join(", ")) : ""}`).join(" · ");
+  const used = Array.isArray(p.styles_used)
+    ? p.styles_used.map((u) => typeof u === "string" ? esc(u) : `${esc(u?.style)}${Array.isArray(u?.techniques) && u.techniques.length ? ": " + esc(u.techniques.join(", ")) : ""}`).join(" · ")
+    : esc(p.styles_used || "");
 
   const html = `
   <div class="panel px">
@@ -390,8 +392,14 @@ $("#ref-file").addEventListener("change", async (e) => {
   e.target.value = "";
 });
 
+// Mỗi phần vẽ riêng: một phần lỗi dữ liệu không làm hỏng cả trang.
+const safe = (fn, ...a) => { try { fn(...a); } catch (e) { console.error(e); } };
+
 async function refresh() {
-  try { state = await api("/api/state"); render(); } catch { $("#busy").textContent = "Mất kết nối máy chủ"; }
+  let next;
+  try { next = await api("/api/state"); } catch { $("#busy").textContent = "Mất kết nối máy chủ"; return; }
+  state = next;
+  safe(render);
 }
 route();
 refresh();

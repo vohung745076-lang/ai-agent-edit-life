@@ -61,6 +61,8 @@ app/                      giao diện web (node app/server.mjs)
 
 ## `project.json` (giao diện đọc file này — cập nhật ở MỖI bước)
 
+Ghi file này bằng Python (`json.dump(..., ensure_ascii=False, indent=2)`), **không** dựng JSON bằng chuỗi trong PowerShell. `outputs` và `styles_used` phải là mảng JSON thật, không phải chuỗi.
+
 ```json
 {
   "id": "2026-11-14-van-phong",
