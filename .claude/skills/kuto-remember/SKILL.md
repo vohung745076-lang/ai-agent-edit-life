@@ -43,4 +43,7 @@ Sau đó cập nhật:
 - `styles/personal/STYLE.md`: viết lại phần tóm tắt cho khớp.
 - Phong cách học được nào đóng góp kỹ thuật được giữ nguyên qua duyệt: tăng `uses` trong `style.json` của nó; kỹ thuật bị người dùng bỏ: ghi vào `avoid_for` hoặc ghi chú của kỹ thuật đó.
 
+- Bài học thuộc nhóm nào trong 8 nhóm (pacing, transition, camera, typography, color, sound, storytelling, composition) thì cũng ghi vào `styles/personal/style.json` → `analysis.<nhóm>.rules`, để Creative Director tra được.
+- Chạy `python tools\style_kb.py index` để cập nhật kho.
+
 Kết thúc bằng danh sách ngắn những gì vừa ghi nhớ để người dùng xác nhận hoặc gạch bỏ.

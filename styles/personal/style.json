@@ -4,25 +4,76 @@
   "status": "personal",
   "source": "",
   "created": "2026-11-14",
-  "summary": "Khẩu vị riêng của chủ kênh, tích luỹ qua từng video đã chốt. Luôn được nạp đầu tiên và thắng mọi phong cách học được.",
-  "topics": ["công sở", "đời sống hằng ngày", "hài nhẹ nhàng"],
-  "best_for": "Mọi video của kênh: chuyện thường ngày nơi công sở, giọng vui nhộn, dí dỏm.",
+  "summary": "Khẩu vị riêng của chủ kênh: chuyện công sở / đi chơi cùng team, kể bằng giọng dẫn tấu hài kiểu \"Adam\" TikTok (\"Hello các con vợ…\"), nhạc nền hài, chữ to bật nảy, phụ đề chạy chữ có tiếng tick, nhiều SFX theo chuyển động.",
+  "topics": [
+    "công sở",
+    "đời sống hằng ngày",
+    "hài nhẹ nhàng. hoặc những video trong việc đi du lịch",
+    "talking head."
+  ],
+  "best_for": "Mọi video của kênh: chuyện thường ngày nơi công sở, đi du lịch/nghỉ dưỡng cùng team, giọng vui nhộn, dí dỏm.",
   "avoid_for": "",
   "tokens": {
     "palette": [
-      { "role": "nền", "hex": "#14121c" },
-      { "role": "chữ", "hex": "#ffffff" },
-      { "role": "nhấn", "hex": "#ff4f9a" }
+      {
+        "role": "nền",
+        "hex": "#14121c"
+      },
+      {
+        "role": "chữ",
+        "hex": "#ffffff"
+      },
+      {
+        "role": "nhấn",
+        "hex": "#ff4f9a"
+      },
+      {
+        "role": "nhấn phụ / từ đang đọc / nhãn dán",
+        "hex": "#ffd84d"
+      }
     ],
     "fonts": [
-      { "role": "tiêu đề", "family": "Montserrat", "weight": 900, "note": "đủ dấu tiếng Việt" },
-      { "role": "phụ đề", "family": "Montserrat", "weight": 700, "note": "" }
+      {
+        "role": "tiêu đề",
+        "family": "Montserrat",
+        "weight": 900,
+        "note": "đủ dấu tiếng Việt; 16:9 84–112px, dọc ×1,15 (tối đa 88px nếu 3 dòng)"
+      },
+      {
+        "role": "phụ đề",
+        "family": "Montserrat",
+        "weight": 800,
+        "note": "16:9 54px, dọc 64px, nền đen 55% bo góc"
+      }
     ],
-    "pacing": { "avg_shot": 2.0, "cuts_per_min": 30, "hook_seconds": 1.5 },
-    "transitions": ["cắt thẳng theo nhịp"],
-    "text_motion": ["chữ bật lên, back.out, 0.3s"],
-    "effects": [],
-    "audio": ["nhạc nền nhỏ hơn giọng nói"]
+    "pacing": {
+      "avg_shot": 4.0,
+      "cuts_per_min": 15,
+      "hook_seconds": 1.5,
+      "note": "cảnh theo câu thoại; video có giọng dẫn dày dài ~60 s (bản chốt 2026-11-14-141022: 59 s, 13 cảnh)"
+    },
+    "transitions": [
+      "cắt thẳng theo câu thoại + whoosh",
+      "đứng hình + phóng giật + scratch cho cú twist",
+      "thẻ chữ rung \"NHƯNG MÀ!\"",
+      "carousel 3D cho đoạn điểm danh"
+    ],
+    "text_motion": [
+      "chữ bật lên, back.out, 0.3s",
+      "nhãn dán vàng nghiêng -4°",
+      "danh sách bật từng dòng theo từ khoá giọng đọc",
+      "con dấu đập xuống (scale 2.4→1, xoay -6°)"
+    ],
+    "effects": [
+      "quay chậm 0.63× cho khoảnh khắc chill",
+      "đứng hình"
+    ],
+    "audio": [
+      "giọng dẫn kiểu Adam: Edge TTS en-US-BrianMultilingualNeural, pitch -6Hz, rate +8..12%, volume 1.15",
+      "nhạc nền hài (marimba/pizzicato/bass um-pa ~128 BPM) volume ~0.16, tắt ở điểm gãy",
+      "tiếng gốc cảnh có không khí ~0.2",
+      "SFX: tick mỗi từ phụ đề, pop khi chữ bật, whoosh chuyển cảnh, scratch twist, boing, kèn buồn, ba-dum-tss kết"
+    ]
   },
   "techniques": [
     {
@@ -31,8 +82,145 @@
       "when": "điểm danh nhiều khoảnh khắc ngắn (một ngày của tôi, top N)",
       "avoid": "đoạn cần xem kỹ một cảnh hoặc có lời thoại quan trọng",
       "file": "techniques/carousel-3d.html"
+    },
+    {
+      "id": "carousel-stamp",
+      "name": "Carousel 3D khớp lời + con dấu chốt",
+      "when": "liệt kê 3 vế câu thoại rồi chốt bằng một câu đùa (\"Nghỉ dưỡng hay đi công tác?!\")",
+      "avoid": "khi không có giọng dẫn đọc từng vế",
+      "file": "techniques/carousel-stamp.html"
+    },
+    {
+      "id": "freeze-twist",
+      "name": "Đứng hình \"À nhầm!\"",
+      "when": "đánh tráo kỳ vọng ngay sau câu mở đầu",
+      "avoid": "dùng quá 1 lần mỗi video",
+      "file": "techniques/freeze-twist.html"
+    },
+    {
+      "id": "twist-card",
+      "name": "Thẻ chữ \"NHƯNG MÀ!\"",
+      "when": "bước ngoặt giữa video, sau đoạn kỳ vọng đẹp",
+      "avoid": "",
+      "file": "techniques/twist-card.html"
+    },
+    {
+      "id": "checklist-reveal",
+      "name": "Danh sách bật theo giọng",
+      "when": "liệt kê 2–4 thứ với dòng cuối là câu đùa (\"Laptop: cũng có\")",
+      "avoid": "",
+      "file": "techniques/checklist-reveal.html"
+    },
+    {
+      "id": "captions-karaoke",
+      "name": "Phụ đề chạy chữ + tick",
+      "when": "mọi câu giọng dẫn (trừ câu đã có thẻ chữ/nhãn riêng)",
+      "avoid": "",
+      "file": "techniques/captions-karaoke.html"
+    },
+    {
+      "id": "vo-comedy-pipeline",
+      "name": "Dây chuyền giọng dẫn tấu hài",
+      "when": "sinh cả 16:9 và 9:16 từ một danh sách cảnh + kịch bản (build) và cắt cảnh/nhạc/SFX (prep)",
+      "avoid": "",
+      "file": "techniques/vo-comedy-build.py"
     }
   ],
-  "user_notes": "",
-  "message": "Đây là giá trị khởi đầu. Sửa trực tiếp ở đây bất cứ lúc nào; Kuto sẽ tự cập nhật sau mỗi video bạn chốt."
+  "user_notes": "Điều tôi thíc, có kịch bản script vui nhộn và  đưa nhạc nền cùng vào video. Giọng voice là giọng adam(Mở đầu: Hello các con vợ đã đến với cuộc sống thường nhật của kp3 )",
+  "message": "Cập nhật sau video 2026-11-14-141022 (chốt v2). Sửa trực tiếp ở đây bất cứ lúc nào.",
+  "edited_by_user": "2026-11-14",
+  "analysis": {
+    "pacing": {
+      "summary": "Nhịp theo câu thoại của giọng dẫn, ~4 s/cảnh; quay chậm cho khoảnh khắc chill.",
+      "rules": [
+        "Mỗi cảnh dài bằng câu đọc + 0,2–0,4 s",
+        "Video có giọng dẫn dày được phép ~60 s",
+        "Hook trong 1,5 s đầu bằng câu chào \"Hello các con vợ\""
+      ]
+    },
+    "transition": {
+      "summary": "Cắt thẳng + whoosh; twist bằng đứng hình hoặc thẻ chữ rung.",
+      "rules": [
+        "Cú twist: đứng hình + phóng giật + scratch, hoặc thẻ \"NHƯNG MÀ!\"",
+        "Không dùng chuyển cảnh mềm cho câu đùa"
+      ]
+    },
+    "typography": {
+      "summary": "Montserrat 900 to, bật back.out; nhãn dán vàng; phụ đề chạy chữ từng từ.",
+      "rules": [
+        "Tiêu đề cảnh ≤3 dòng, từ khoá tô #ff4f9a",
+        "Phụ đề nhóm 2–5 từ theo cụm nghĩa, từ đang đọc vàng #ffd84d",
+        "Phụ đề tắt trước khi chuyển cảnh"
+      ]
+    },
+    "color": {
+      "summary": "Nền tím than #14121c, chữ trắng, nhấn hồng #ff4f9a và vàng #ffd84d; cảnh đêm nâng gamma.",
+      "rules": [
+        "Cảnh tối: eq gamma 1.15–1.25 bằng FFmpeg khi cắt"
+      ]
+    },
+    "sound": {
+      "summary": "Giọng dẫn kiểu Adam + nhạc hài + SFX dày theo chuyển động chữ.",
+      "rules": [
+        "Bắt buộc có giọng dẫn và nhạc nền",
+        "Giọng Adam: BrianMultilingual pitch -6Hz",
+        "Tick mỗi từ phụ đề, pop khi chữ bật, whoosh khi chuyển cảnh",
+        "Tắt nhạc ở điểm gãy; kèn buồn sau câu than; ba-dum-tss sau câu chốt"
+      ]
+    },
+    "storytelling": {
+      "summary": "Tấu hài đánh tráo kỳ vọng: chào → hứa hẹn → À nhầm/Nhưng mà → liệt kê bi hài → câu chốt gọi \"các con vợ\".",
+      "rules": [
+        "Mở: \"Hello các con vợ! Đã đến với cuộc sống thường nhật của KP3\"",
+        "Lời dẫn phủ gần hết video",
+        "Đùa về tình huống công sở, không về ngoại hình",
+        "Kết gọi lại \"các con vợ\" + hẹn Thứ Hai"
+      ]
+    },
+    "composition": {
+      "summary": "Cảnh quay dọc: 16:9 đặt khung thẻ trái + chữ phải; 9:16 tràn khung, chữ dải trên, phụ đề y≈1100.",
+      "rules": [
+        "16:9 với cảnh dọc: thẻ bo góc viền trắng nghiêng nhẹ bên trái, chữ bên phải",
+        "9:16: chữ quan trọng trong dải 168–1330 px, nhãn carousel phía trên tấm"
+      ]
+    }
+  },
+  "structure": {
+    "aspect": "16:9 + 9:16",
+    "duration": 59,
+    "segments": [
+      {
+        "role": "hook",
+        "label": "Chào + À nhầm",
+        "share": 0.15,
+        "what": "Hello các con vợ, hứa hẹn, đứng hình À nhầm"
+      },
+      {
+        "role": "setup",
+        "label": "Hành trình",
+        "share": 0.38,
+        "what": "chuẩn bị, trên đường, tới nơi, chill"
+      },
+      {
+        "role": "main",
+        "label": "Nhưng mà…",
+        "share": 0.2,
+        "what": "thẻ twist + carousel điểm danh việc vẫn phải làm + con dấu"
+      },
+      {
+        "role": "climax",
+        "label": "Bi hài",
+        "share": 0.16,
+        "what": "ăn cho đỡ tủi, anh hùng thầm lặng"
+      },
+      {
+        "role": "outro",
+        "label": "Chốt",
+        "share": 0.11,
+        "what": "câu chốt + Thứ Hai gặp lại nha các con vợ + ba-dum-tss"
+      }
+    ]
+  },
+  "uses": 1,
+  "last_project": "2026-11-14-141022"
 }

@@ -177,6 +177,7 @@ async function getState() {
     projects.push({
       ...p, id, outputs,
       planUrl: (await exists(path.join(dir, "PLAN.md"))) ? `/files/projects/${id}/PLAN.md` : null,
+      directionUrl: (await exists(path.join(dir, "DIRECTION.md"))) ? `/files/projects/${id}/DIRECTION.md` : null,
       mtime: (await fsp.stat(path.join(dir, "project.json"))).mtimeMs,
     });
   }
@@ -193,6 +194,7 @@ async function getState() {
       ...s, slug,
       demoUrl: await url(s.demo || "demo.mp4"), demoVerticalUrl: await url(s.demo_vertical || "demo-9x16.mp4"),
       referenceUrl: await url("source/reference.mp4"), briefUrl: await url("STYLE.md"),
+      metricsUrl: await url("analysis/STYLE_METRICS.md"),
       lessonsUrl: slug === "personal" ? await url("LESSONS.md") : null,
     });
   }
@@ -245,7 +247,7 @@ async function ask({ text = "", mode = "auto" }) {
     const id = await createProject(link, note);
     return addJob({
       kind: "edit", title: `Dựng video · ${note || link}`.slice(0, 90), target: { type: "project", id },
-      prompt: `Dùng skill kuto-edit để dựng video hoàn chỉnh.\nLink Google Drive: ${link}\nThư mục dự án (đã tạo sẵn, có project.json): projects/${id}\n${note ? `Yêu cầu thêm của người dùng: ${note}\n` : ""}Làm trọn quy trình tới bước giao duyệt, cập nhật project.json ở mỗi bước.`,
+      prompt: `Dùng skill kuto-edit để dựng video hoàn chỉnh.\nLink Google Drive: ${link}\nThư mục dự án (đã tạo sẵn, có project.json): projects/${id}\n${note ? `Yêu cầu thêm của người dùng: ${note}\n` : ""}Làm trọn quy trình (xem hiểu → Creative Director chọn phong cách và cấu trúc → dựng → xuất) tới bước giao duyệt, cập nhật project.json ở mỗi bước.`,
     });
   }
   if (mode === "learn") {
@@ -259,7 +261,7 @@ async function learn(source, note) {
   const slug = await createStyle(source, note);
   return addJob({
     kind: "learn", title: `Học mẫu · ${note || source}`.slice(0, 90), target: { type: "style", id: slug },
-    prompt: `Dùng skill kuto-learn để học phong cách từ video mẫu.\nNguồn: ${source}\nThư mục phong cách (đã tạo sẵn, có style.json): styles/${slug}\n${note ? `Ghi chú của người dùng (điều họ thích ở video này): ${note}\n` : ""}Làm trọn quy trình tới bước có bảng phong cách và video demo chờ duyệt.`,
+    prompt: `Dùng skill kuto-learn để học phong cách từ video mẫu theo đủ dây chuyền: thu thập bằng yt-dlp, Video Analysis Agent phân tích 8 nhóm + cấu trúc timeline, ghi vào kho tri thức, dựng demo.\nNguồn: ${source}\nThư mục phong cách (đã tạo sẵn, có style.json): styles/${slug}\n${note ? `Ghi chú của người dùng (điều họ thích ở video này): ${note}\n` : ""}Làm trọn quy trình tới bước có bảng phong cách và video demo chờ duyệt.`,
   });
 }
 
@@ -284,7 +286,7 @@ const routes = {
     const file = path.join(ROOT, "styles", id, "style.json");
     const s = await readJson(file);
     if (!s) throw new Error("Không tìm thấy phong cách.");
-    for (const k of ["name", "summary", "topics", "best_for", "avoid_for", "tokens", "user_notes"]) if (k in patch) s[k] = patch[k];
+    for (const k of ["name", "summary", "topics", "best_for", "avoid_for", "tokens", "analysis", "user_notes"]) if (k in patch) s[k] = patch[k];
     s.edited_by_user = today();
     await writeJson(file, s);
     return { ok: true };

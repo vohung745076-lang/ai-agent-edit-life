@@ -29,21 +29,36 @@ python tools\analyze_video.py "projects\<id>\raw" --out "projects\<id>\analysis"
 - Cần soi kỹ một khoảnh khắc: `--dense <bắt đầu> <kết thúc> --fps 6`.
 - Viết `analysis/NOTES.md`: bảng `file · đoạn dùng được (từ–đến) · nội dung · điểm chất lượng 1–5 · vai trò gợi ý (mở đầu / cao trào / chuyển ý / kết)`.
 
-## 3. Ý tưởng và kịch bản — `status: planning`
+## 3. Creative Director — chọn phong cách và cấu trúc — `status: planning`
 
-1. **Nạp phong cách**: đọc `styles/personal/STYLE.md` và `styles/personal/LESSONS.md` (bắt buộc theo), rồi `style.json` của mọi phong cách `approved`. Với mỗi phong cách xem `topics`, `best_for`, `avoid_for`, `techniques`.
-2. **Chọn hướng kể**: một câu ý tưởng + cấu trúc (mở đầu gây chú ý trong 1–2 giây đầu → diễn biến → cao trào → kết có điểm rơi). Chủ đề mặc định là chuyện công sở hằng ngày, giọng vui nhộn.
-3. **Chọn tiếng**:
-   - Cảnh quay **có lời thoại rõ**: giữ lời gốc làm xương sống, phụ đề chạy theo từng từ (mốc từ trong `analysis/*.json`), nhạc nền nhỏ. Đề xuất thêm câu dẫn/chữ chêm gây cười nếu hợp.
-   - Cảnh quay **không lời**: viết kịch bản dẫn chuyện vui nhộn rồi tạo giọng đọc AI (`tools/tts_vi.py`), hoặc chỉ nhạc + chữ trên màn hình nếu hình ảnh tự kể được. Nêu lý do chọn trong `PLAN.md`.
-   - Nhạc: xem `library/music/` trước; không có thì theo `/media-use` (mục nhạc nền). Âm thanh hiệu ứng (whoosh, pop) lấy từ `/media-use`.
-4. **Chọn kỹ thuật theo từng phân đoạn**: với mỗi phân đoạn, chọn kỹ thuật hợp nội dung của chính phân đoạn đó từ phong cách cá nhân → phong cách đã duyệt → registry HyperFrames (`/hyperframes-registry`) → `blocks/`. Chỉ áp trọn một phong cách khi chủ đề video trùng `topics` của nó. Carousel 3D (`blocks/carousel-3d`) hợp với đoạn điểm danh nhiều khoảnh khắc ngắn (ví dụ "một ngày của tôi"), không dùng cho đoạn cần xem kỹ một cảnh.
-5. Viết **`PLAN.md`**:
+Giao cho agent **`kuto-creative-director`** (công cụ Agent, `subagent_type: "kuto-creative-director"`), lời nhắc gồm: thư mục `projects/<id>`, yêu cầu của người dùng, thời lượng mong muốn nếu có. Agent đó đọc ghi chú cảnh quay, nạp `styles/personal` (luật), tra kho bằng `tools/style_kb.py` (`index`, `match`, `show`), rồi ghi:
+
+- `projects/<id>/direction.json`: ý tưởng, kế hoạch tiếng, phong cách nào áp dụng ở mức nào (`nền` / `toàn bộ` / `từng kỹ thuật` / `không dùng`) kèm lý do, **cấu trúc timeline** theo vai trò (`hook → setup → main → climax → cta/outro`) với cảnh quay và kỹ thuật cho từng phân đoạn, các quy tắc dựng phải tuân theo, những gì đã loại.
+- `projects/<id>/DIRECTION.md`: bản cho người đọc.
+
+Nếu phiên này không có agent đó: tự làm đúng theo `.claude/agents/kuto-creative-director.md`.
+
+Kiểm lại quyết định trước khi dựng:
+
+- Chỉ có phong cách `approved` / `personal`. Phong cách được áp `toàn bộ` phải cùng chủ đề với video; nếu không thì hạ xuống `từng kỹ thuật`.
+- Mỗi kỹ thuật có lý do gắn với nội dung của chính phân đoạn đó. Không trái `styles/personal/LESSONS.md`.
+- Cảnh quay được gán có thật trong `analysis/NOTES.md`.
+
+## 3b. Timeline & Editing — kịch bản chi tiết
+
+Từ đây bạn là **Timeline & Editing Agent**: biến chỉ đạo thành timeline cụ thể rồi dựng.
+
+1. **Tiếng** (theo `audio_plan` của chỉ đạo):
+   - Cảnh quay **có lời thoại rõ**: giữ lời gốc làm xương sống, phụ đề chạy theo từng từ (mốc từ trong `analysis/*.json`), nhạc nền nhỏ. Thêm câu dẫn/chữ chêm gây cười nếu hợp.
+   - Cảnh quay **không lời**: viết kịch bản dẫn chuyện vui nhộn về đời sống công sở rồi tạo giọng đọc AI (`tools/tts_vi.py`), hoặc nhạc + chữ nếu hình ảnh tự kể được.
+   - Nhạc: xem `library/music/` trước; không có thì theo `/media-use` (mục nhạc nền). Âm thanh hiệu ứng (whoosh, pop) lấy từ `/media-use`. Phong cách được chọn có quy tắc "cắt theo beat" thì đo beat của bản nhạc (`npx --yes hyperframes beats`) và đặt điểm cắt lên lưới beat.
+2. **Kỹ thuật**: lấy file từ `styles/<slug>/techniques/` của phong cách được chỉ định, rồi `styles/personal/techniques/`, `/hyperframes-registry`, `blocks/`. Chỉnh thông số theo `analysis.*.rules` của phong cách đó (`python tools\style_kb.py show <slug>`). Carousel 3D (`blocks/carousel-3d`) hợp với đoạn điểm danh nhiều khoảnh khắc ngắn, không dùng cho đoạn cần xem kỹ một cảnh.
+3. Viết **`PLAN.md`** (timeline dựng):
    - Ý tưởng một câu, thời lượng mục tiêu (dọc 20–45 giây, ngang 30–90 giây trừ khi được yêu cầu khác), dòng LOOK (màu hex, font, cỡ chữ).
-   - Bảng phân cảnh: `# · thời điểm · nguồn (file, từ–đến) · hình · chữ trên màn hình · lời/giọng đọc · chuyển cảnh · kỹ thuật (nguồn phong cách) · lý do`.
+   - Bảng phân cảnh theo đúng cấu trúc của chỉ đạo: `# · vai trò (hook/main/…) · thời điểm · nguồn (file, từ–đến) · hình · chữ trên màn hình · lời/giọng đọc · chuyển cảnh · kỹ thuật (nguồn phong cách) · lý do`.
    - Kịch bản lời đầy đủ.
-   - Mục "Lấy từ phong cách nào" và "Cố ý không dùng".
-6. Ghi `styles_used` vào `project.json`. Không dừng chờ duyệt kế hoạch trừ khi người dùng yêu cầu duyệt kịch bản trước.
+   - Mục "Lấy từ phong cách nào" và "Cố ý không dùng" (chép từ chỉ đạo, bổ sung nếu có thay đổi khi dựng).
+4. Ghi `styles_used` vào `project.json` (mảng JSON thật). Không dừng chờ duyệt kế hoạch trừ khi người dùng yêu cầu duyệt kịch bản trước.
 
 ## 4. Dựng bản ngang — `status: editing`
 
@@ -73,6 +88,8 @@ python tools\analyze_video.py "projects\<id>\out" --out "projects\<id>\out\_chec
 ```
 
 Read các bảng khung hình trong `out/_check/` và soát: chữ có bị tràn, sai dấu, che mặt không; cảnh có đen hoặc đứng hình không; nhịp có đúng kế hoạch không. Sửa rồi render lại cho tới khi đạt.
+
+Đối chiếu với chỉ đạo bằng số: `python tools\analyze_style.py "projects\<id>\out\<bản 16x9>.mp4" --out "projects\<id>\out\_check"` rồi so nhịp cắt, kiểu chuyển cảnh, tông màu với quy tắc của phong cách đã chọn (`rules_in_force` trong `direction.json`). Lệch rõ thì sửa.
 
 ## 7. Giao duyệt — `status: review`
 

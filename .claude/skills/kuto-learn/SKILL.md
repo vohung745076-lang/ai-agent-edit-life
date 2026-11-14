@@ -1,65 +1,64 @@
 ---
 name: kuto-learn
-description: Học phong cách dựng từ một video mẫu (TikTok, YouTube, Instagram, Facebook hoặc file) - phân tích chữ, font, màu, nhịp cắt, chuyển cảnh, animation, motion, hiệu ứng, âm thanh; viết bảng phong cách và dựng video demo để người dùng duyệt và chỉnh; lưu thành skill trong thư viện styles/. Dùng khi người dùng gửi video mẫu, nói "học video này", "tham khảo", "video này edit hay", hoặc góp ý cho một phong cách đang chờ duyệt.
+description: Học phong cách dựng từ một video mẫu (YouTube, TikTok, Instagram, Facebook, nguồn được cấp phép hoặc file người dùng cung cấp) - thu thập bằng yt-dlp (video, audio, phụ đề, metadata), phân tích thành 8 nhóm dữ liệu (pacing, transition, camera, typography, color grading, sound design, storytelling, composition) cùng cấu trúc timeline, lưu vào kho tri thức styles/, dựng demo để người dùng duyệt và chỉnh. Dùng khi người dùng gửi video mẫu, nói "học video này", "tham khảo", "video này edit hay", hoặc góp ý cho một phong cách đang chờ duyệt.
 ---
 
-# Học phong cách từ video mẫu
+# Reference Video Learning — học từ video mẫu
 
 Đọc `CLAUDE.md` ở gốc dự án trước. Mỗi lệnh PowerShell nạp `tools\env.ps1`.
 
-Mục tiêu: rút ra **ngữ pháp dựng** của video mẫu thành các kỹ thuật rời, dùng lại được cho từng phân đoạn. Không chép nội dung (hình, nhạc, logo, nhân vật, câu chữ) của video mẫu.
+**Không xem rồi bắt chước.** Video mẫu được tách thành dữ liệu theo 8 nhóm và một cấu trúc timeline; thứ được lưu là **quy tắc dựng áp dụng được cho video khác**. Nội dung của mẫu (hình, nhạc, logo, nhân vật, câu chữ, trò đùa) không được chép.
 
-Thư mục phong cách: `styles/<slug>/`. Nếu lời nhắc đã cho sẵn `slug` thì dùng đúng nó. Ghi `style.json` với `status: "learning"` ngay từ đầu để giao diện thấy tiến trình.
-
-## 1. Lấy video mẫu
-
-```powershell
-python tools\fetch_reference.py "<link hoặc file>" "styles\<slug>"
+```
+Nguồn (YouTube / nguồn được cấp phép / file người dùng)
+  → 1. Media Acquisition        tools/fetch_reference.py (yt-dlp)
+  → 2. Video Analysis Agent     tools/analyze_style.py + agent kuto-video-analyst
+  → 3. Editing Style Knowledge Base   styles/<slug>/style.json + tools/style_kb.py
+  → 4. Demo + duyệt             người dùng xem, sửa, duyệt trên giao diện
+  ⇒ dùng lại ở /kuto-edit: Creative Director Agent chọn → Timeline & Editing Agent dựng
 ```
 
-Mã thoát 2: ghi lỗi vào `style.json.message`, đặt `status: "error"`, đề nghị người dùng tải file lên, rồi dừng.
+Thư mục phong cách: `styles/<slug>/`. Lời nhắc đã cho sẵn `slug` thì dùng đúng nó. Ghi `style.json` bằng Python (`ensure_ascii=False`); cập nhật `status` và `message` ở mỗi tầng để giao diện thấy tiến trình (`status: "learning"` cho tới khi có demo).
 
-## 2. Đo và xem
+## 1. Media Acquisition (yt-dlp)
 
 ```powershell
-python tools\analyze_video.py "styles\<slug>\source\reference.mp4" --out "styles\<slug>\analysis" --interval 0.5
-npx --yes hyperframes measure "styles\<slug>\source\reference.mp4"     # xem --help để chọn phép đo: cuts, motion, eases, look
+python tools\fetch_reference.py "<link hoặc file>" "styles\<slug>"      # thêm --max-seconds 300, --langs vi,en, --cookies-browser chrome khi cần
 ```
 
-- Read toàn bộ bảng khung hình. Với **mỗi kiểu khoảnh khắc** (chữ vào/ra, chuyển cảnh, phóng to, hiệu ứng), soi dải dày: `--dense <s> <e> --fps 8`.
-- Mọi con số ghi kèm nhãn **đo được** hay **ước lượng**.
+Thu về trong `source/`: `reference.mp4`, `audio.wav`, `subtitles.json` (nếu nguồn có), `thumbnail.jpg`, `info.json` (tiêu đề, kênh, thời lượng, lượt xem/thích, thẻ, mô tả, chương, giấy phép, loại nguồn).
 
-## 3. Rút ngữ pháp
+- Mã thoát 2: đặt `status: "error"`, ghi nguyên nhân và cách xử lý vào `message` (tải file lên qua giao diện, hoặc `--cookies-browser`), rồi dừng.
+- Video dài hơn `--max-seconds` chỉ được phân tích phần đầu: ghi rõ điều này trong `STYLE.md`.
+- Ghi `source`, `source_type`, `license` vào `style.json`.
 
-Trả lời đủ các mục sau bằng số liệu cụ thể:
+## 2. Video Analysis Agent
 
-| Mục | Cần ghi |
-| --- | --- |
-| Nhịp cắt | số cảnh, độ dài cảnh trung bình/ngắn nhất/dài nhất, cắt mỗi phút, nhịp có bám nhạc không, giây đầu tiên mở thế nào |
-| Chữ | kiểu font (gần nhất với font nào dùng được, có hỗ trợ tiếng Việt), độ đậm, cỡ so với khung, viền/bóng/nền, vị trí, số từ mỗi dòng, cách nhấn từ khoá (màu, cỡ) |
-| Chuyển động chữ | vào và ra kiểu gì, thời lượng, kiểu ease, theo từ hay theo dòng |
-| Chuyển cảnh | các loại dùng, tần suất, thời lượng, dùng ở ngữ cảnh nào |
-| Máy và hình | phóng to nhấn mạnh, lia, rung, tốc độ nhanh/chậm, cắt cúp, khung trong khung, nhãn dán, emoji |
-| Màu và hiệu ứng | bảng màu theo vai trò (nền, chữ, nhấn), màu phim, hạt, viền mờ, phát sáng |
-| Âm thanh | loại nhạc, nhịp, tiếng hiệu ứng ở hành động nào, giọng đọc hay lời gốc |
-| Cấu trúc | các phần của video và thời lượng từng phần |
+Giao cho agent **`kuto-video-analyst`** (công cụ Agent, `subagent_type: "kuto-video-analyst"`), lời nhắc gồm: thư mục `styles/<slug>`, ghi chú của người dùng về điều họ thích ở video này (nếu có). Agent đó chạy `analyze_video.py` + `analyze_style.py`, xem bảng khung hình, ảnh tĩnh, dải dày, rồi ghi `styles/<slug>/analysis/groups.json`.
 
-## 4. Tách thành kỹ thuật dùng lại
+Nếu phiên này không có agent đó: tự làm đúng theo `.claude/agents/kuto-video-analyst.md`.
 
-Mỗi kỹ thuật đáng giữ thành một file scene HyperFrames trong `styles/<slug>/techniques/<id>.html` (theo hợp đồng `/hyperframes`: nằm trong `<template>`, có khối CONFIG, chữ và màu là biến), dựng lại bằng nội dung trung tính của riêng ta. Tìm trong `/hyperframes-registry` trước; có khối gần giống thì cài rồi chỉnh thay vì viết từ đầu.
+Nhận kết quả xong, **kiểm lại** `groups.json` trước khi dùng:
 
-Với mỗi kỹ thuật ghi: `id`, tên, **dùng khi nào**, **không dùng khi nào**, thông số chính, file.
+- Đủ 8 nhóm: `pacing`, `transition`, `camera`, `typography`, `color`, `sound`, `storytelling`, `composition`. Mỗi nhóm có `summary`, `rules`, `confidence`.
+- `rules` là quy tắc áp dụng được cho video khác, có số cụ thể; không phải mô tả lại video mẫu.
+- `structure.segments` có `role` (`hook`, `setup`, `main`, `climax`, `cta`, `outro`), `share` cộng lại ≈ 1.
+- Thiếu hoặc mơ hồ thì tự bổ sung bằng cách xem lại dải dày của đoạn liên quan.
 
-## 5. Viết `style.json` và `STYLE.md`
+## 3. Editing Style Knowledge Base
 
-`style.json` (giao diện đọc và cho người dùng sửa trực tiếp):
+### Tách kỹ thuật dùng lại
+
+Mỗi `technique_candidates` đáng giữ thành một scene HyperFrames trong `styles/<slug>/techniques/<id>.html` (theo hợp đồng `/hyperframes`: nằm trong `<template>`, có khối CONFIG, chữ và màu là biến), dựng lại bằng nội dung trung tính của riêng ta. Tìm trong `/hyperframes-registry` trước; có khối gần giống thì cài rồi chỉnh.
+
+### `style.json` — bản ghi trong kho
 
 ```json
 {
   "slug": "<slug>",
   "name": "Tên dễ nhớ do bạn đặt",
   "status": "draft",
-  "source": "<link>",
+  "source": "<link>", "source_type": "Youtube qua yt-dlp", "license": null,
   "created": "2026-11-14",
   "summary": "2–3 câu: phong cách này là gì, mạnh ở đâu",
   "topics": ["công sở", "vlog một ngày"],
@@ -69,37 +68,60 @@ Với mỗi kỹ thuật ghi: `id`, tên, **dùng khi nào**, **không dùng khi
     "palette": [{ "role": "nền", "hex": "#101014" }, { "role": "chữ", "hex": "#ffffff" }, { "role": "nhấn", "hex": "#ffd60a" }],
     "fonts": [{ "role": "tiêu đề", "family": "Montserrat", "weight": 900, "note": "gần nhất với font gốc, đủ dấu tiếng Việt" }],
     "pacing": { "avg_shot": 1.6, "cuts_per_min": 38, "hook_seconds": 1.2 },
-    "transitions": ["cắt thẳng theo nhịp", "whip-pan 0.25s giữa hai bối cảnh"],
-    "text_motion": ["từng từ bật lên, back.out, 0.18s"],
-    "effects": ["phóng 108% vào câu chốt"],
-    "audio": ["nhạc lo-fi 90 BPM", "pop khi chữ xuất hiện"]
+    "transitions": ["cắt thẳng theo nhịp"], "text_motion": ["từng từ bật lên, back.out, 0.18s"],
+    "effects": ["phóng 108% vào câu chốt"], "audio": ["nhạc lo-fi 90 BPM", "pop khi chữ xuất hiện"]
+  },
+  "analysis": {
+    "pacing":       { "summary": "…", "rules": ["…"], "measured": {}, "confidence": "đo được" },
+    "transition":   { "summary": "…", "rules": ["…"], "confidence": "ước lượng" },
+    "camera":       { "summary": "…", "rules": ["…"], "confidence": "ước lượng" },
+    "typography":   { "summary": "…", "rules": ["…"], "confidence": "nhìn bằng mắt" },
+    "color":        { "summary": "…", "rules": ["…"], "measured": {}, "confidence": "đo được" },
+    "sound":        { "summary": "…", "rules": ["…"], "measured": {}, "confidence": "đo được" },
+    "storytelling": { "summary": "…", "rules": ["…"], "confidence": "nhìn bằng mắt" },
+    "composition":  { "summary": "…", "rules": ["…"], "confidence": "nhìn bằng mắt" }
+  },
+  "structure": {
+    "duration": 32.5, "aspect": "9:16",
+    "segments": [
+      { "role": "hook", "label": "Mở đầu gây chú ý", "start": 0, "end": 2.1, "share": 0.06,
+        "what": "…", "pacing": "…", "techniques": ["caption-pop"] }
+    ]
   },
   "techniques": [
-    { "id": "caption-pop", "name": "Phụ đề bật từng từ", "when": "lời thoại nhanh, hài", "avoid": "cảnh tĩnh, trang trọng", "file": "techniques/caption-pop.html" }
+    { "id": "caption-pop", "name": "Phụ đề bật từng từ", "group": "typography", "when": "lời thoại nhanh, hài",
+      "avoid": "cảnh tĩnh, trang trọng", "file": "techniques/caption-pop.html" }
   ],
-  "demo": "demo.mp4",
-  "demo_vertical": "demo-9x16.mp4",
-  "user_notes": "",
-  "message": "Điều cần người duyệt quyết định"
+  "demo": "demo.mp4", "demo_vertical": "demo-9x16.mp4",
+  "user_notes": "", "message": "Điều cần người duyệt quyết định"
 }
 ```
 
-`STYLE.md` là **bảng phong cách** cho người đọc: nguồn, tóm tắt, bảng các mục ở bước 3 (số liệu + nhãn đo được/ước lượng), danh sách kỹ thuật kèm khi nào dùng, những gì cố ý không lấy, và gợi ý điều chỉnh để thành phong cách riêng.
+- `analysis` và `structure` chép từ `groups.json` (đã kiểm). `tokens` là bản rút gọn để người dùng sửa nhanh; phải khớp với `analysis`.
+- `tokens.palette` lấy từ bảng màu đo được, gán vai trò; `tokens.pacing` lấy từ số đo.
 
-## 6. Dựng demo để duyệt
+### `STYLE.md` — bảng phong cách cho người đọc
 
-- Tạo dự án HyperFrames `styles/<slug>/demo/` dài 10–15 giây, trình diễn lần lượt các kỹ thuật bằng **nội dung của người dùng**: ưu tiên cảnh quay trong `projects/*/raw` gần nhất; nếu chưa có thì dùng nền màu, hình khối và chữ mẫu chủ đề công sở.
+Nguồn và giấy phép; tóm tắt; **8 mục theo 8 nhóm** (mỗi mục: nhận định + số liệu kèm nhãn đo được / ước lượng / nhìn bằng mắt + quy tắc); sơ đồ cấu trúc timeline; danh sách kỹ thuật kèm khi nào dùng; những gì cố ý không lấy; gợi ý điều chỉnh để thành phong cách riêng của chủ kênh.
+
+### Lập chỉ mục
+
+```powershell
+python tools\style_kb.py index
+```
+
+## 4. Demo để duyệt
+
+- Dự án HyperFrames `styles/<slug>/demo/` dài 10–15 giây, đi theo **cấu trúc đã học** thu nhỏ (hook → main → kết) và trình diễn các kỹ thuật bằng **nội dung của người dùng**: ưu tiên cảnh quay trong `projects/*/raw` gần nhất; chưa có thì dùng nền màu, hình khối và chữ mẫu chủ đề công sở.
 - `check`, render `-q draft` ra `styles/<slug>/demo.mp4`; làm bản dọc bằng `tools\fork_vertical.ps1` rồi render ra `demo-9x16.mp4` nếu video mẫu là khổ dọc hoặc kỹ thuật phụ thuộc bố cục.
-- Tự xem lại demo bằng `analyze_video.py --no-transcribe`, so với bảng khung hình của video mẫu: đúng ngữ pháp chưa.
-- Đặt `status: "draft"`, điền `message`. Kết thúc lượt bằng tóm tắt: học được gì, đề xuất dùng ở đâu, cần duyệt gì.
+- Tự kiểm: chạy `analyze_style.py` trên demo và so với số đo của mẫu (nhịp cắt, kiểu chuyển cảnh, tông màu). Lệch nhiều thì sửa demo.
+- Đặt `status: "draft"`, điền `message`. Kết thúc lượt bằng tóm tắt: học được gì theo 8 nhóm (mỗi nhóm một dòng), cấu trúc timeline, đề xuất dùng ở loại video nào, cần duyệt gì.
 
 Phong cách `draft` **chưa được dùng** để dựng video. Người dùng duyệt trên giao diện (đặt `status: "approved"`) hoặc nói "duyệt".
 
 ## Sửa theo góp ý
 
-Khi lời nhắc chứa góp ý cho một phong cách:
-
-1. Đọc lại `style.json` trước: người dùng có thể đã sửa trực tiếp `tokens`, `best_for`, `user_notes` trên giao diện. Coi những giá trị đó là đúng.
+1. Đọc lại `style.json` trước: người dùng có thể đã sửa trực tiếp `tokens`, `analysis.*.rules`, `best_for`, `user_notes` trên giao diện. Coi những giá trị đó là đúng.
 2. Ghi góp ý vào `styles/<slug>/feedback.md`.
-3. Sửa kỹ thuật và `STYLE.md` cho khớp, dựng lại demo, giữ `status: "draft"` cho tới khi được duyệt.
-4. Những thay đổi người dùng yêu cầu chính là **khẩu vị riêng** của họ: ghi thêm một dòng vào `styles/personal/LESSONS.md` (xem `/kuto-remember`).
+3. Sửa kỹ thuật, `analysis`, `structure`, `STYLE.md` cho khớp; dựng lại demo; chạy `style_kb.py index`; giữ `status: "draft"` cho tới khi được duyệt.
+4. Thay đổi người dùng yêu cầu là **khẩu vị riêng**: ghi thêm một dòng vào `styles/personal/LESSONS.md` (xem `/kuto-remember`).

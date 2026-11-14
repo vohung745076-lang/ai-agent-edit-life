@@ -24,7 +24,11 @@ def main():
 
     try:
         if "/folders/" in link:
-            files = gdown.download_folder(url=link, output=str(raw), quiet=False, remaining_ok=True)
+            # remaining_ok chỉ có ở gdown < 5; bản mới đã bỏ tham số này.
+            try:
+                files = gdown.download_folder(url=link, output=str(raw), quiet=False, remaining_ok=True)
+            except TypeError:
+                files = gdown.download_folder(url=link, output=str(raw), quiet=False)
             if not files:
                 raise RuntimeError("Thư mục trống hoặc không có quyền xem.")
         else:

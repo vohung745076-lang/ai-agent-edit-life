@@ -13,6 +13,35 @@ Luôn trả lời bằng **tiếng Việt**, ngắn gọn. Nội dung mặc đ�
 | Góp ý sửa một video / một phong cách đang chờ duyệt | Sửa đúng chỗ được góp ý, render lại | skill của luồng tương ứng (mục "Sửa theo góp ý") |
 | "Chốt video", "hoàn thành", "lưu phong cách" | Ghi lại những gì đã sửa thành phong cách cá nhân | `/kuto-remember` |
 
+## Dây chuyền học và dựng
+
+```
+HỌC (/kuto-learn)                                   DỰNG (/kuto-edit)
+Nguồn: YouTube / nguồn được cấp phép / file          Link Drive
+  → Media Acquisition (yt-dlp)                         → Tải + xem hiểu cảnh quay
+  → Video Analysis Agent (kuto-video-analyst)          → Creative Director Agent (kuto-creative-director)
+  → Editing Style Knowledge Base (styles/)  ───────────→   chọn phong cách + cấu trúc hợp chủ đề
+  → Demo + người dùng duyệt                            → Timeline & Editing Agent (Kuto + HyperFrames + FFmpeg)
+                                                       → Xuất 16:9 + 9:16 → duyệt → /kuto-remember
+```
+
+Video mẫu **không được xem rồi bắt chước**. Nó được tách thành 8 nhóm dữ liệu, mỗi nhóm là các quy tắc dựng áp dụng được:
+
+| Nhóm | Nhận diện |
+| --- | --- |
+| `pacing` | nhịp nhanh/chậm, thời lượng mỗi cảnh |
+| `transition` | cut, zoom, fade, whip pan, dissolve |
+| `camera` | góc quay, cỡ cảnh, chuyển động máy |
+| `typography` | font, vị trí chữ, animation |
+| `color` | tông màu, tương phản, bão hoà |
+| `sound` | nhạc nền, SFX, nhịp beat |
+| `storytelling` | hook, nội dung chính, cao trào, CTA |
+| `composition` | bố cục, cách sắp xếp hình |
+
+kèm `structure` (cấu trúc timeline theo vai trò `hook → setup → main → climax → cta/outro`, mỗi phần có tỉ lệ thời lượng để co giãn). Cấu trúc và quy tắc chỉ được áp cho video mới **khi phù hợp nội dung**; Creative Director có quyền không dùng phong cách nào.
+
+Agent con nằm ở `.claude/agents/`: `kuto-video-analyst`, `kuto-creative-director`. Vai Timeline & Editing do chính Kuto đảm nhận trong `/kuto-edit`.
+
 Mọi việc dựng hình dùng **HyperFrames** (`/hyperframes`, `/hyperframes-cli`, `/hyperframes-registry`, `/media-use`); cắt ghép, đổi định dạng, xử lý âm thanh dùng **FFmpeg**.
 
 ## Môi trường (bắt buộc)
@@ -34,7 +63,9 @@ Máy dùng Node 22 và FFmpeg bản portable trong `.runtime/`. **Mọi lệnh P
 | `python tools/drive_fetch.py "<link>" "projects/<id>"` | Tải thư mục/file Drive công khai vào `raw/` |
 | `python tools/analyze_video.py <file\|dir> --out <dir>` | "Xem" video: thông số, điểm cắt, bảng khung hình có mốc thời gian, lời thoại (Whisper tiếng Việt). Đọc các file `.sheet-NN.jpg` bằng Read để nhìn nội dung |
 | `python tools/analyze_video.py <file> --out <dir> --dense <s> <e> --fps 6` | Dải khung hình dày để soi chuyển động, hiệu ứng chữ, chuyển cảnh |
-| `python tools/fetch_reference.py "<link\|file>" "styles/<slug>"` | Tải video mẫu (TikTok, YouTube, Instagram, Facebook, file) |
+| `python tools/fetch_reference.py "<link\|file>" "styles/<slug>"` | Media Acquisition bằng yt-dlp: video, audio, phụ đề, metadata, ảnh bìa |
+| `python tools/analyze_style.py <video> --out <dir>` | Đo ngữ pháp dựng: nhịp, loại chuyển cảnh, chuyển động máy, màu, BPM/beat, bố cục, đường cong năng lượng |
+| `python tools/style_kb.py index \| match --topic "…" \| show <slug>` | Kho tri thức phong cách: lập chỉ mục, tìm phong cách hợp chủ đề, xem quy tắc + cấu trúc |
 | `python tools/tts_vi.py --script <json> --outdir <dir>` | Giọng đọc AI tiếng Việt + mốc thời gian từng từ |
 | `& tools\fork_vertical.ps1 "projects\<id>\edit"` | Tạo dự án bản dọc 9:16 từ bản ngang |
 | `npx --yes hyperframes measure <video>` | Đo video: nhịp cắt, chuyển động, ease, bảng màu |
@@ -48,12 +79,14 @@ projects/<id>/            một video
   project.json            trạng thái cho giao diện (xem dưới)
   raw/                    cảnh quay gốc từ Drive
   analysis/               kết quả "xem" video (INDEX.md, *.json, *.sheet-*.jpg)
-  PLAN.md                 ý tưởng, thứ tự cảnh, kịch bản, kỹ thuật áp dụng
+  DIRECTION.md, direction.json   quyết định của Creative Director: phong cách, cấu trúc, kỹ thuật theo phân đoạn
+  PLAN.md                 timeline dựng: thứ tự cảnh, kịch bản, kỹ thuật áp dụng
   edit/                   dự án HyperFrames 16:9 (1920x1080)
   edit-vertical/          dự án HyperFrames 9:16 (1080x1920)
   out/                    video xuất: <id>-16x9-vN.mp4, <id>-9x16-vN.mp4
   feedback.md             góp ý của người dùng qua từng vòng
-styles/<slug>/            một phong cách học được (xem /kuto-learn)
+styles/<slug>/            một phong cách học được (xem /kuto-learn): style.json (8 nhóm + structure), STYLE.md, techniques/, demo
+styles/INDEX.json         chỉ mục kho tri thức (sinh bằng tools/style_kb.py index)
 styles/personal/          phong cách cá nhân, LUÔN được ưu tiên
 blocks/                   khối dựng dùng chung
 app/                      giao diện web (node app/server.mjs)

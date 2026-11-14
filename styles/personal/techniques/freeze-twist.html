@@ -1,0 +1,54 @@
+<!--
+  ĐỨNG HÌNH + PHÓNG GIẬT (cú twist "À nhầm!"). Thay src ảnh (khung cuối của cảnh trước, xuất bằng ffmpeg -frames:v 1), chữ trong .kicker và .title. Đi kèm sfx scratch ở giây 0 và tắt nhạc ~0,6 s. Bản 16:9 (khung thẻ trái); bản dọc xem projects/2026-11-14-141022/edit-vertical.
+  Nguồn: video 2026-11-14-141022 (bản chốt v2).
+-->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #14121c; font-family: "Montserrat", sans-serif; }
+    #s01b-glow { position: absolute; left: -10%; top: -30%; width: 70%; height: 160%;
+      background: radial-gradient(closest-side, #ff4f9a 0%, transparent 70%); opacity: 0.22; }
+    #s01b-frame { position: absolute; left: 300px; top: 70px; width: 529px; height: 940px; overflow: hidden;
+      border: 8px solid #fff; border-radius: 34px; box-shadow: 0 40px 90px rgba(0,0,0,0.55); background: #000; }
+    #s01b-zoom { position: absolute; inset: 0; }
+    #s01b-frame video, #s01b-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+    #s01b-text { position: absolute; left: 960px; width: 880px; top: 170px; text-align: left; }
+    #s01b-text .title { color: #ffffff; font-weight: 900; font-size: 92px; line-height: 1.06; letter-spacing: -0.02em;
+      text-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 28px rgba(0,0,0,0.55); }
+    #s01b-text .title.line { margin-top: 10px; }
+    #s01b-text .title b { color: #ff4f9a; font-weight: 900; }
+    #s01b-text .title.end b { color: #ffd84d; }
+    #s01b-text .kicker { margin-bottom: 18px; }
+    #s01b-text .kicker span { display: inline-block; padding: 8px 26px; background: #ffd84d; color: #14121c;
+      font-weight: 900; font-size: 50px; border-radius: 14px; }
+    #s01b-text .sub { margin-top: 34px; display: inline-block; padding: 12px 30px; background: #ff4f9a; color: #fff;
+      font-weight: 800; font-size: 48px; line-height: 1.15; border-radius: 16px; }
+  </style>
+  <div id="root" data-composition-id="s01b" data-width="1920" data-height="1080">
+    <div id="s01b-glow" data-layout-ignore></div>
+    <div id="s01b-frame">
+      <div id="s01b-zoom">
+        <img id="s01b-m0" class="clip" data-start="0" data-duration="4.4" data-track-index="1" src="assets/video/s01f.jpg" alt="" />
+      </div>
+    </div>
+    <div id="s01b-text">
+        <div id="s01b-k" class="kicker"><span>À nhầm!</span></div>
+        <div id="s01b-t1" class="title">Sếp cho đi<br><b>NGHỈ DƯỠNG</b><br>cấm làm việc!</div>
+      </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#s01b-zoom", { scale: 1.0, x: 0 }, { scale: 1.18, duration: 0.12, ease: "power4.out" }, 0);
+      tl.to("#s01b-zoom", { x: 12, duration: 0.05, ease: "none" }, 0.12);
+      tl.to("#s01b-zoom", { x: -12, duration: 0.05, ease: "none" }, 0.17);
+      tl.to("#s01b-zoom", { x: 12, duration: 0.05, ease: "none" }, 0.22);
+      tl.to("#s01b-zoom", { x: -12, duration: 0.05, ease: "none" }, 0.27);
+      tl.to("#s01b-zoom", { x: 12, duration: 0.05, ease: "none" }, 0.32);
+      tl.to("#s01b-zoom", { x: 0, scale: 1.26, duration: 4.0, ease: "none" }, 0.37);
+      tl.fromTo("#s01b-frame", { rotation: -2.5 }, { rotation: -1, duration: 4.4, ease: "none" }, 0);
+      tl.fromTo("#s01b-k span", { opacity: 0, scale: 0.6, rotation: -8 }, { opacity: 1, scale: 1, rotation: -4, duration: 0.3, ease: "back.out(2.5)" }, 0.1);
+      tl.fromTo("#s01b-t1", { opacity: 0, y: 40, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(2)" }, 0.2);
+      window.__timelines["s01b"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,179 @@
+<!--
+  CAROUSEL 3D + CON DẤU. Dựa trên blocks/carousel-3d; mốc ra trước của từng tấm (FRONTS) khớp từng vế câu đọc; con dấu #car-stamp đập xuống ở câu chốt ("Nghỉ dưỡng hay đi công tác?!") kèm scratch, sau đó kèn buồn.
+  Nguồn: video 2026-11-14-141022 (bản chốt v2).
+-->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: var(--car-bg, #14121c);
+      font-family: "Montserrat", sans-serif;
+    }
+    #car-glow {
+      position: absolute;
+      inset: -20%;
+      background: radial-gradient(closest-side, var(--car-accent, #ff4f9a) 0%, transparent 70%);
+      opacity: 0.28;
+    }
+    #car-stage {
+      position: absolute;
+      inset: 0;
+      perspective: 2200px;
+      perspective-origin: 50% 46%;
+    }
+    #car-tilt,
+    #car-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+    }
+    .car-panel {
+      position: absolute;
+      overflow: hidden;
+      background: #0b0b10;
+      border: 6px solid #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+    }
+    .car-panel video,
+    .car-panel img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .car-shade {
+      position: absolute;
+      inset: 0;
+      background: #0b0b10;
+    }
+    .car-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 4%;
+      text-align: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 54px;
+      letter-spacing: -0.01em;
+      text-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
+    }
+    .car-label span {
+      display: inline-block;
+      padding: 6px 26px;
+      background: var(--car-accent, #ff4f9a);
+      border-radius: 14px;
+    }
+    .car-stamp { position: absolute; left: 0; right: 0; top: 30%; text-align: center; }
+    #car-stamp-in { display: inline-block; padding: 18px 40px; background: #14121c; color: #fff; border: 8px solid #ff4f9a;
+      border-radius: 22px; font-weight: 900; font-size: 92px; line-height: 1.05; letter-spacing: -0.02em; }
+    #car-stamp-in b { color: #ffd84d; }
+  </style>
+
+  <div id="root" data-composition-id="carousel" data-width="1920" data-height="1080">
+    <div id="car-glow" data-layout-ignore></div>
+    <div id="car-stage" data-layout-allow-overflow>
+      <div id="car-tilt">
+        <div id="car-ring">
+          <div class="car-panel" id="car-p1">
+            <video id="car-v1" class="clip" data-start="0" data-duration="10.0" data-media-start="0" data-track-index="1" src="assets/video/c1.mp4" muted playsinline></video>
+            <div class="car-shade"></div>
+          </div>
+          <div class="car-panel" id="car-p2">
+            <video id="car-v2" class="clip" data-start="0" data-duration="10.0" data-media-start="0" data-track-index="2" src="assets/video/c2.mp4" muted playsinline></video>
+            <div class="car-shade"></div>
+          </div>
+          <div class="car-panel" id="car-p3">
+            <video id="car-v3" class="clip" data-start="0" data-duration="10.0" data-media-start="0" data-track-index="3" src="assets/video/c3.mp4" muted playsinline></video>
+            <div class="car-shade"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="car-label clip" id="car-l1" data-start="0" data-duration="10.0" data-track-index="4"><span>Duyệt báo cáo trên bãi cát</span></div>
+    <div class="car-label clip" id="car-l2" data-start="0" data-duration="10.0" data-track-index="5"><span>Tối về: điện thoại vẫn reo</span></div>
+    <div class="car-label clip" id="car-l3" data-start="0" data-duration="10.0" data-track-index="6"><span>Sáng ra: lại họp tiếp</span></div>
+    <div class="car-stamp clip" id="car-stamp" data-start="6.73" data-duration="3.27" data-track-index="7" data-layout-allow-overlap><span id="car-stamp-in">Nghỉ dưỡng<br>hay <b>đi công tác?!</b></span></div>
+  </div>
+
+  <script>
+    (function () {
+      // ───── CONFIG ─────
+      const CONFIG = {
+        total: 10.0, // thời lượng scene (giây) = data-duration của host
+        intro: 0.7, // thời gian vòng xoay bay vào
+        turn: 0.45, // thời gian xoay giữa 2 tấm
+        drift: 6, // độ trôi nhẹ (độ) trong lúc dừng ở mỗi tấm
+        tilt: -7, // nghiêng vòng (độ): âm = nhìn từ trên xuống
+        panelRatio: 16 / 9, // tỉ lệ tấm; khung dọc sẽ tự dùng 4:5
+        gap: 70, // khoảng hở giữa các tấm (px)
+        ease: "power3.inOut",
+      };
+      // ──────────────────
+      const root = document.querySelector('[data-composition-id="carousel"]');
+      const W = root.offsetWidth || 1920;
+      const H = root.offsetHeight || 1080;
+      const vertical = H > W;
+      const panels = Array.from(root.querySelectorAll(".car-panel"));
+      const labels = Array.from(root.querySelectorAll(".car-label span"));
+      const n = panels.length;
+      const step = 360 / n;
+      const ratio = 9 / 16;
+      const pw = Math.round(vertical ? W * 0.62 : H * 0.78 * ratio);
+      const ph = Math.round(pw / ratio);
+      const radius = Math.round((pw + CONFIG.gap) / 2 / Math.tan(Math.PI / n)) + (n < 4 ? 120 : 0);
+
+      panels.forEach((p, i) => {
+        // Tấm thứ i nằm trên vành tròn bán kính `radius` (GSAP không đụng vào transform của tấm)
+        p.style.width = pw + "px";
+        p.style.height = ph + "px";
+        p.style.left = -pw / 2 + "px";
+        p.style.top = -ph / 2 + "px";
+        p.style.transform = "rotateY(" + i * step + "deg) translateZ(" + radius + "px)";
+      });
+      if (vertical) root.querySelectorAll(".car-label").forEach((l) => gsap.set(l, { fontSize: 60, top: "25%", bottom: "auto" }));
+
+      const tl = gsap.timeline({ paused: true });
+      const ring = "#car-ring";
+      const FRONTS = [0.7, 2.55, 4.85];
+      const holdOf = (i) => (i < n - 1 ? FRONTS[i + 1] : CONFIG.total) - FRONTS[i];
+
+      gsap.set("#car-tilt", { rotationX: CONFIG.tilt, z: -radius });
+      tl.fromTo(ring, { rotationY: 70, scale: 0.55, opacity: 0 }, { rotationY: 0, scale: 1, opacity: 1, duration: CONFIG.intro, ease: "power3.out" }, 0);
+      tl.fromTo("#car-glow", { scale: 0.6 }, { scale: 1.1, duration: CONFIG.total, ease: "sine.inOut" }, 0);
+
+      panels.forEach((p, i) => {
+        const t0 = FRONTS[i];
+        const hold = holdOf(i); // lúc tấm i đã ra trước
+        const shade = p.querySelector(".car-shade");
+        const label = labels[i];
+        // xoay tới tấm i (tấm 0 đã ở trước sau intro)
+        if (i > 0) tl.to(ring, { rotationY: -i * step, duration: CONFIG.turn, ease: CONFIG.ease }, t0 - CONFIG.turn);
+        // trôi nhẹ trong lúc dừng
+        const driftDur = hold - (i < n - 1 ? CONFIG.turn : 0.05);
+        tl.to(ring, { rotationY: -i * step - CONFIG.drift, duration: Math.max(0.1, driftDur), ease: "none" }, t0);
+        // sáng tấm đang ở trước, tối các tấm còn lại
+        tl.fromTo(shade, { opacity: 0.55 }, { opacity: 0, duration: 0.35, ease: "power2.out" }, Math.max(0, t0 - 0.3));
+        if (i < n - 1) tl.to(shade, { opacity: 0.55, duration: 0.35, ease: "power2.in" }, t0 + hold - CONFIG.turn);
+        // nhãn
+        if (label) {
+          tl.fromTo(label, { opacity: 0, y: 40, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(2)" }, t0 + 0.05);
+          const out = i < n - 1 ? t0 + hold - CONFIG.turn : CONFIG.total - 0.3;
+          tl.to(label, { opacity: 0, y: -24, duration: 0.22, ease: "power2.in" }, out);
+        }
+      });
+      tl.fromTo("#car-stamp-in", { opacity: 0, scale: 2.4, rotation: -14 }, { opacity: 1, scale: 1, rotation: -6, duration: 0.25, ease: "power4.in" }, 6.73);
+      [0.27, 0.32, 0.37].forEach((d, i) => tl.to("#car-stamp-in", { x: i % 2 ? -10 : 10, duration: 0.05, ease: "none" }, 6.73 + d));
+      tl.to("#car-stamp-in", { x: 0, duration: 0.05, ease: "none" }, 6.73 + 0.42);
+      window.__timelines["carousel"] = tl;
+    })();
+  </script>
+</template>

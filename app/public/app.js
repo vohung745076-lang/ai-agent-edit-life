@@ -121,6 +121,17 @@ const P_STEPS = [["downloading", "Tải cảnh quay"], ["analyzing", "Xem hiểu
 const P_LABEL = { queued: ["Chờ tới lượt", "wait"], downloading: ["Đang tải", "run"], analyzing: ["Đang xem", "run"], planning: ["Lên ý tưởng", "run"], editing: ["Đang dựng", "run"], rendering: ["Đang xuất", "run"], review: ["Chờ duyệt", "wait"], done: ["Đã chốt", "good"], error: ["Lỗi", "bad"] };
 const S_LABEL = { personal: ["Của bạn", "me"], learning: ["Đang học", "run"], draft: ["Chờ duyệt", "wait"], approved: ["Đã duyệt", "good"], error: ["Lỗi", "bad"] };
 const J_LABEL = { queued: ["Chờ", "wait"], running: ["Đang chạy", "run"], done: ["Xong", "good"], error: ["Lỗi", "bad"], stopped: ["Đã dừng", ""] };
+const GROUPS = [
+  ["pacing", "Pacing", "Nhịp dựng nhanh/chậm, thời lượng mỗi cảnh"],
+  ["transition", "Transition", "Cut, zoom, fade, whip pan"],
+  ["camera", "Camera", "Góc quay, cỡ cảnh, chuyển động máy"],
+  ["typography", "Typography", "Font, vị trí chữ, animation"],
+  ["color", "Color grading", "Tông màu, độ tương phản"],
+  ["sound", "Sound design", "Nhạc nền, SFX, nhịp beat"],
+  ["storytelling", "Storytelling", "Hook, nội dung chính, cao trào, CTA"],
+  ["composition", "Composition", "Bố cục, cách sắp xếp hình"],
+];
+const ROLE = { hook: "Hook", setup: "Dẫn vào", main: "Nội dung chính", climax: "Cao trào", cta: "CTA", outro: "Kết" };
 const chip = ([text, cls]) => `<span class="chip ${cls}">${esc(text)}</span>`;
 const time = (ms) => (ms ? new Date(ms).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "");
 const busyFor = (type, id) => state.jobs.find((j) => (j.status === "running" || j.status === "queued") && j.target && j.target.type === type && j.target.id === id);
@@ -189,7 +200,8 @@ function renderProjects() {
     ${p.step ? `<p><b>Bước hiện tại:</b> ${esc(p.step)}</p>` : ""}
     ${p.message ? `<h4>Lời nhắn từ Kuto</h4><div class="note">${esc(p.message)}</div>` : ""}
     <div class="links row">
-      ${p.planUrl ? `<a href="${esc(p.planUrl)}" target="_blank" rel="noopener">Ý tưởng &amp; kịch bản (PLAN.md)</a>` : ""}
+      ${p.directionUrl ? `<a href="${esc(p.directionUrl)}" target="_blank" rel="noopener">Chỉ đạo sáng tạo (DIRECTION.md)</a>` : ""}
+      ${p.planUrl ? `<a href="${esc(p.planUrl)}" target="_blank" rel="noopener">Timeline &amp; kịch bản (PLAN.md)</a>` : ""}
       ${p.source ? `<a href="${esc(p.source)}" target="_blank" rel="noopener">Thư mục Drive gốc</a>` : ""}
     </div>
     ${used ? `<p><small><b>Phong cách đã dùng:</b> ${used}</small></p>` : ""}
@@ -236,6 +248,21 @@ function renderStyles() {
   const pal = (t.palette || []).map((c, i) => `<div><input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(c.hex) ? c.hex : "#000000")}" data-pal="${i}" data-edit /><span>${esc(c.role)}</span><input type="text" value="${esc(c.hex)}" data-palhex="${i}" data-edit maxlength="7" /></div>`).join("");
   const fonts = (t.fonts || []).map((f, i) => `<div class="field"><label>Font ${esc(f.role)}</label><input value="${esc(f.family)}" data-font="${i}" data-edit /><small>Độ đậm <input type="number" value="${esc(f.weight)}" data-fontw="${i}" data-edit min="100" max="900" step="100" style="width:80px;display:inline-block;padding:2px 6px" /> ${esc(f.note || "")}</small></div>`).join("");
   const techs = (s.techniques || []).map((k) => `<div class="tech"><b>${esc(k.name || k.id)}</b>${k.when ? `<p class="yes">${esc(k.when)}</p>` : ""}${k.avoid ? `<p class="no">${esc(k.avoid)}</p>` : ""}</div>`).join("");
+  const an = s.analysis || {}, st = s.structure || {};
+  const segs = (st.segments || []).filter((g) => g && g.share > 0);
+  const structure = segs.length ? `
+    <h4>Cấu trúc timeline${st.duration ? ` · mẫu dài ${esc(st.duration)}s` : ""}${st.aspect ? ` · ${esc(st.aspect)}` : ""}</h4>
+    <div class="struct">${segs.map((g) => `<div class="seg r-${esc(g.role)}" style="flex:${Math.max(0.04, g.share)}"><b>${esc(ROLE[g.role] || g.role)}</b><i>${Math.round(g.share * 100)}%</i></div>`).join("")}</div>
+    <div class="seglist">${segs.map((g) => `<div><span class="dot r-${esc(g.role)}"></span><b>${esc(g.label || ROLE[g.role] || g.role)}</b> <small>${g.start != null ? `${esc(g.start)}–${esc(g.end)}s` : ""}</small><p>${esc(g.what || "")}${g.pacing ? ` <em>Nhịp: ${esc(g.pacing)}</em>` : ""}${g.techniques?.length ? ` <em>Kỹ thuật: ${esc(g.techniques.join(", "))}</em>` : ""}</p></div>`).join("")}</div>
+    <small>Khi áp cho video mới, Kuto co giãn theo tỉ lệ phần trăm, không theo số giây của mẫu.</small>` : "";
+  const groups = GROUPS.map(([k, label, hint]) => {
+    const g = an[k] || {};
+    return `<div class="grp">
+      <div class="grp-head"><b>${label}</b><small>${esc(hint)}</small>${g.confidence ? `<span class="conf">${esc(g.confidence)}</span>` : ""}</div>
+      <textarea data-edit data-grp-sum="${k}" placeholder="Nhận định (chưa có)" class="sum">${esc(g.summary || "")}</textarea>
+      <textarea data-edit data-grp-rules="${k}" placeholder="Quy tắc dựng, mỗi dòng một quy tắc">${esc((g.rules || []).join("\n"))}</textarea>
+    </div>`;
+  }).join("");
   const demos = videoFig(s.demoUrl, "Demo Kuto dựng theo phong cách này") + videoFig(s.demoVerticalUrl, "Demo bản dọc", true) + videoFig(s.referenceUrl, "Video mẫu gốc (chỉ để so sánh)", true);
 
   setHTML(box, `
@@ -251,7 +278,14 @@ function renderStyles() {
   </div>
   ${demos ? `<div class="panel px"><h3>Xem để duyệt</h3><div class="videos">${demos}</div></div>` : ""}
   <div class="panel px">
-    <h3>Bảng phong cách <small style="font:400 13px var(--body);color:var(--muted)">sửa trực tiếp rồi bấm Lưu</small></h3>
+    <h3>Phân tích theo 8 nhóm <small style="font:400 13px var(--body);color:var(--muted)">ô trên: nhận định · ô dưới: quy tắc dựng Kuto sẽ áp dụng (sửa được)</small></h3>
+    ${structure}
+    <h4>Quy tắc dựng</h4>
+    <div class="grps">${groups}</div>
+    ${s.metricsUrl ? `<div class="links row"><a href="${esc(s.metricsUrl)}" target="_blank" rel="noopener">Số liệu máy đo (STYLE_METRICS.md)</a></div>` : ""}
+  </div>
+  <div class="panel px">
+    <h3>Thông số nhanh <small style="font:400 13px var(--body);color:var(--muted)">sửa trực tiếp rồi bấm Lưu</small></h3>
     <div class="field"><label for="s-summary">Tóm tắt</label><textarea id="s-summary" data-edit>${esc(s.summary || "")}</textarea></div>
     <div class="grid2" style="margin-top:12px">
       <div class="field"><label for="s-best">Hợp với</label><textarea id="s-best" data-edit>${esc(s.best_for || "")}</textarea></div>
@@ -300,7 +334,14 @@ function collectStyle() {
   tokens.pacing = { ...(tokens.pacing || {}), avg_shot: num("#s-avg"), cuts_per_min: num("#s-cpm"), hook_seconds: num("#s-hook") };
   const lines = (id) => $(id).value.split("\n").map((x) => x.trim()).filter(Boolean);
   tokens.transitions = lines("#s-trans"); tokens.text_motion = lines("#s-text"); tokens.effects = lines("#s-fx"); tokens.audio = lines("#s-audio");
+  const analysis = JSON.parse(JSON.stringify(s.analysis || {}));
+  GROUPS.forEach(([k]) => {
+    const sum = $(`[data-grp-sum="${k}"]`)?.value.trim() || "";
+    const rules = ($(`[data-grp-rules="${k}"]`)?.value || "").split("\n").map((x) => x.trim()).filter(Boolean);
+    if (sum || rules.length || analysis[k]) analysis[k] = { ...(analysis[k] || {}), summary: sum, rules };
+  });
   return {
+    analysis,
     name: $("#s-name").value.trim() || s.name, summary: $("#s-summary").value.trim(), best_for: $("#s-best").value.trim(), avoid_for: $("#s-avoid").value.trim(),
     topics: $("#s-topics").value.split(",").map((x) => x.trim()).filter(Boolean), tokens, user_notes: $("#s-notes").value.trim(),
   };
