@@ -344,6 +344,32 @@ async function upload(req, url) {
   return { job: job.id };
 }
 
+// Bản xem thử tương thích: giữ nguyên hình, đổi âm thanh AAC sang MP3.
+// Trình xem dựng trên Electron (vd. trình duyệt tích hợp của VS Code) không giải mã được AAC nên phát video câm.
+const compatJobs = new Map();
+function compatCopy(file) {
+  const dir = path.join(path.dirname(file), ".compat");
+  const target = path.join(dir, path.basename(file));
+  if (compatJobs.has(target)) return compatJobs.get(target);
+  const job = (async () => {
+    const [src, dst] = await Promise.all([fsp.stat(file), fsp.stat(target).catch(() => null)]);
+    if (dst && dst.mtimeMs >= src.mtimeMs && dst.size > 0) return target;
+    await fsp.mkdir(dir, { recursive: true });
+    const tmp = target + ".part.mp4";
+    const ffmpeg = path.join(ROOT, ".runtime", "ffmpeg", "bin", "ffmpeg.exe");
+    await new Promise((resolve, reject) => {
+      const p = spawn(ffmpeg, ["-hide_banner", "-loglevel", "error", "-y", "-i", file, "-c:v", "copy",
+        "-c:a", "libmp3lame", "-b:a", "192k", "-movflags", "+faststart", tmp], { windowsHide: true });
+      p.on("error", reject);
+      p.on("close", (code) => (code === 0 ? resolve() : reject(new Error("Không tạo được bản xem thử tương thích"))));
+    });
+    await fsp.rename(tmp, target);
+    return target;
+  })().finally(() => compatJobs.delete(target));
+  compatJobs.set(target, job);
+  return job;
+}
+
 function serveFile(req, res, file) {
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) return send(res, 404, { error: "Không tìm thấy" });
@@ -386,7 +412,9 @@ const server = http.createServer(async (req, res) => {
       const rel = pathname.slice("/files/".length);
       const file = path.resolve(ROOT, rel);
       const ok = ["projects", "styles"].some((d) => inside(path.join(ROOT, d), file));
-      return ok ? serveFile(req, res, file) : send(res, 403, { error: "Từ chối" });
+      if (!ok) return send(res, 403, { error: "Từ chối" });
+      if (url.searchParams.get("compat") === "1" && /\.mp4$/i.test(file)) return serveFile(req, res, await compatCopy(file));
+      return serveFile(req, res, file);
     }
     if (req.method === "GET") {
       const file = path.resolve(PUBLIC, "." + (pathname === "/" ? "/index.html" : pathname));

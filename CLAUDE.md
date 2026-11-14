@@ -118,4 +118,5 @@ Ghi file này bằng Python (`json.dump(..., ensure_ascii=False, indent=2)`), **
 4. **Chỉ dùng phong cách đã duyệt** (`status: "approved"` hoặc `"personal"`). Phong cách `draft` chưa được dùng để dựng.
 5. **Luôn xuất cả hai khổ** 16:9 và 9:16, trừ khi người dùng nói khác. Bản dọc phải bố cục lại, không bóp méo.
 6. **Tự kiểm trước khi giao:** `hyperframes check` sạch lỗi, tự xem khung hình bản render (`analyze_video.py --no-transcribe`) rồi mới báo người dùng.
+8. **"Không nghe thấy tiếng" chưa chắc là lỗi mix.** Trước khi sửa âm thanh, đo file (`ffprobe` có luồng audio, `volumedetect` mức bình thường khoảng −24 đến −14 dB). File có tiếng mà người dùng không nghe được thì nguyên nhân ở trình phát: trình duyệt tích hợp của VS Code và các trình xem Electron không giải mã AAC. Giao diện Kuto đã tự chuyển sang bản xem thử MP3 (`?compat=1`); hướng dẫn người dùng mở bằng Edge/Chrome hoặc trình phát video, **không** dựng lại.
 7. **Báo cáo thật.** Bước nào lỗi hay bỏ qua thì ghi rõ trong `project.json.message`.

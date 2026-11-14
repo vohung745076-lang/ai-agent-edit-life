@@ -7,6 +7,10 @@ const setHTML = (el, html) => { if (el && el._h !== html) { el._h = html; el.inn
 let state = { projects: [], styles: [], jobs: [] };
 let sel = { project: null, style: null };
 let styleDirty = false;
+// Trình xem không giải mã được AAC (vd. trình duyệt tích hợp của VS Code) sẽ phát video câm:
+// khi đó xin máy chủ bản xem thử có âm thanh MP3.
+let compat = !document.createElement("video").canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
+const playUrl = (url) => (compat && /\.mp4$/i.test(url) ? `${url}?compat=1` : url);
 
 // ───────── hình pixel ─────────
 const PAL = { k: "#1b1220", w: "#ffffff", a: "var(--accent)", p: "var(--soft)", d: "var(--accent-deep)", g: "#d9d2d8" };
@@ -137,7 +141,7 @@ const time = (ms) => (ms ? new Date(ms).toLocaleString("vi-VN", { hour: "2-digit
 const busyFor = (type, id) => state.jobs.find((j) => (j.status === "running" || j.status === "queued") && j.target && j.target.type === type && j.target.id === id);
 
 function videoFig(url, label, tall) {
-  return url ? `<figure class="${tall ? "tall" : ""}"><video src="${esc(url)}" controls preload="metadata" playsinline></video><figcaption>${esc(label)}</figcaption></figure>` : "";
+  return url ? `<figure class="${tall ? "tall" : ""}"><video src="${esc(playUrl(url))}" controls preload="metadata" playsinline></video><figcaption>${esc(label)}${compat ? " · bản xem thử (âm thanh MP3)" : ""} · <a href="${esc(url)}" target="_blank" rel="noopener">mở file gốc</a></figcaption></figure>` : "";
 }
 const isTall = (label = "", file = "") => /9x16|9:16|dọc|vertical/i.test(label + " " + file);
 
@@ -406,6 +410,19 @@ document.addEventListener("click", async (e) => {
   } catch (err) { toast(err.message); }
   btn.disabled = false;
 });
+
+// Dự phòng: đang phát mà không giải mã được byte âm thanh nào → chuyển sang bản tương thích, giữ nguyên vị trí.
+document.addEventListener("timeupdate", (e) => {
+  const v = e.target;
+  if (!(v instanceof HTMLVideoElement) || v.dataset.checked || v.currentTime < 1.5) return;
+  v.dataset.checked = "1";
+  if (v.webkitAudioDecodedByteCount !== 0 || /compat=1/.test(v.currentSrc)) return;
+  compat = true;
+  const t = v.currentTime;
+  v.src = playUrl(v.currentSrc.split("?")[0]);
+  v.addEventListener("loadedmetadata", () => { v.currentTime = t; v.play().catch(() => {}); }, { once: true });
+  toast("Trình xem này không phát được âm thanh AAC. Kuto chuyển sang bản xem thử có âm thanh MP3.");
+}, true);
 
 const hint = (msg, err) => { const h = $("#ask-hint"); h.textContent = msg; h.classList.toggle("err", !!err); };
 $("#ask").addEventListener("submit", async (e) => {
