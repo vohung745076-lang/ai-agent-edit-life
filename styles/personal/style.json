@@ -1,0 +1,38 @@
+{
+  "slug": "personal",
+  "name": "Phong cách cá nhân",
+  "status": "personal",
+  "source": "",
+  "created": "2026-11-14",
+  "summary": "Khẩu vị riêng của chủ kênh, tích luỹ qua từng video đã chốt. Luôn được nạp đầu tiên và thắng mọi phong cách học được.",
+  "topics": ["công sở", "đời sống hằng ngày", "hài nhẹ nhàng"],
+  "best_for": "Mọi video của kênh: chuyện thường ngày nơi công sở, giọng vui nhộn, dí dỏm.",
+  "avoid_for": "",
+  "tokens": {
+    "palette": [
+      { "role": "nền", "hex": "#14121c" },
+      { "role": "chữ", "hex": "#ffffff" },
+      { "role": "nhấn", "hex": "#ff4f9a" }
+    ],
+    "fonts": [
+      { "role": "tiêu đề", "family": "Montserrat", "weight": 900, "note": "đủ dấu tiếng Việt" },
+      { "role": "phụ đề", "family": "Montserrat", "weight": 700, "note": "" }
+    ],
+    "pacing": { "avg_shot": 2.0, "cuts_per_min": 30, "hook_seconds": 1.5 },
+    "transitions": ["cắt thẳng theo nhịp"],
+    "text_motion": ["chữ bật lên, back.out, 0.3s"],
+    "effects": [],
+    "audio": ["nhạc nền nhỏ hơn giọng nói"]
+  },
+  "techniques": [
+    {
+      "id": "carousel-3d",
+      "name": "Carousel 3D xoay",
+      "when": "điểm danh nhiều khoảnh khắc ngắn (một ngày của tôi, top N)",
+      "avoid": "đoạn cần xem kỹ một cảnh hoặc có lời thoại quan trọng",
+      "file": "techniques/carousel-3d.html"
+    }
+  ],
+  "user_notes": "",
+  "message": "Đây là giá trị khởi đầu. Sửa trực tiếp ở đây bất cứ lúc nào; Kuto sẽ tự cập nhật sau mỗi video bạn chốt."
+}

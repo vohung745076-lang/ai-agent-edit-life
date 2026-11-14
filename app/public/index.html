@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="vi" data-theme="dau">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kuto · AI dựng video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Handjet:wght@500;700;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#home" data-nav="home"><span class="logo" id="logo"></span><b>Kuto</b></a>
+  <nav class="tabs">
+    <a href="#home" data-nav="home">Trang chủ</a>
+    <a href="#projects" data-nav="projects">Dự án <i id="n-projects"></i></a>
+    <a href="#styles" data-nav="styles">Thư viện phong cách <i id="n-styles"></i></a>
+    <a href="#log" data-nav="log">Nhật ký</a>
+  </nav>
+  <div class="top-right">
+    <div class="swatches" title="Đổi màu giao diện">
+      <button data-theme-pick="dau" aria-label="Màu dâu"></button>
+      <button data-theme-pick="vietquat" aria-label="Màu việt quất"></button>
+      <button data-theme-pick="bacha" aria-label="Màu bạc hà"></button>
+    </div>
+    <span class="pill" id="busy">Đang rảnh</span>
+  </div>
+</header>
+
+<!-- ───────── TRANG CHỦ ───────── -->
+<main id="view-home" class="view">
+  <section class="hero">
+    <div class="sky" aria-hidden="true">
+      <span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+      <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
+    </div>
+    <h1>Cảnh quay nhỏ.<br />Video lớn.</h1>
+    <p class="lead">Kuto là AI dựng video của bạn. Dán link Google Drive để dựng,<br class="wide" /> hoặc dán link video mẫu để Kuto học cách edit.</p>
+
+    <div class="stage" aria-hidden="true">
+      <div class="strip left"></div>
+      <div class="mascot-wrap"><div class="bubble" id="bubble">Sẵn sàng!</div><div class="mascot" id="mascot"></div><div class="shadow"></div></div>
+      <div class="strip right"></div>
+    </div>
+
+    <form class="ask px" id="ask">
+      <span class="ask-icon">✦</span>
+      <input id="ask-text" autocomplete="off" placeholder="Dán link Drive, link video mẫu, hoặc gõ yêu cầu cho Kuto…" />
+      <button class="btn" type="submit" aria-label="Gửi">→</button>
+    </form>
+    <div class="modes">
+      <label><input type="radio" name="mode" value="auto" checked /><span>Tự nhận biết</span></label>
+      <label><input type="radio" name="mode" value="edit" /><span>Dựng video</span></label>
+      <label><input type="radio" name="mode" value="learn" /><span>Học video mẫu</span></label>
+      <label class="upload"><input type="file" id="ref-file" accept="video/*" hidden /><span>⬆ Tải file mẫu lên</span></label>
+    </div>
+    <p class="hint" id="ask-hint"></p>
+  </section>
+
+  <div class="zig" aria-hidden="true"></div>
+  <section class="band">
+    <div class="band-title">LÀM ĐƯỢC GÌ</div>
+    <div class="cards">
+      <a class="card px" href="#projects" data-nav="projects">
+        <span class="ico" data-ico="clap"></span>
+        <div><h3>Dựng tự động</h3><p>Xem hết cảnh quay, lên ý tưởng, kịch bản, chuyển cảnh, chữ, nhạc. Xuất cả 16:9 và 9:16.</p><em>Xem dự án →</em></div>
+      </a>
+      <a class="card px" href="#styles" data-nav="styles">
+        <span class="ico" data-ico="eye"></span>
+        <div><h3>Học video mẫu</h3><p>Phân tích chữ, nhịp cắt, motion. Gửi bảng phong cách và demo để bạn duyệt.</p><em>Mở thư viện →</em></div>
+      </a>
+      <a class="card px" href="#styles/personal">
+        <span class="ico" data-ico="heart"></span>
+        <div><h3>Phong cách riêng</h3><p>Mỗi lần bạn sửa và chốt video, Kuto ghi nhớ để lần sau dựng đúng ý hơn.</p><em>Xem khẩu vị của bạn →</em></div>
+      </a>
+    </div>
+    <div id="home-live"></div>
+  </section>
+</main>
+
+<!-- ───────── DỰ ÁN ───────── -->
+<main id="view-projects" class="view page" hidden>
+  <div class="page-head"><h2>Dự án video</h2><p>Mỗi link Drive là một dự án. Bấm vào để xem bản dựng, góp ý hoặc chốt.</p></div>
+  <div class="split">
+    <div class="list" id="project-list"></div>
+    <div class="detail" id="project-detail"></div>
+  </div>
+</main>
+
+<!-- ───────── THƯ VIỆN ───────── -->
+<main id="view-styles" class="view page" hidden>
+  <div class="page-head"><h2>Thư viện phong cách</h2><p>Kuto chỉ dùng phong cách bạn đã duyệt, và chỉ dùng từng kỹ thuật ở phân đoạn hợp nội dung.</p></div>
+  <div class="split">
+    <div class="list" id="style-list"></div>
+    <div class="detail" id="style-detail"></div>
+  </div>
+</main>
+
+<!-- ───────── NHẬT KÝ ───────── -->
+<main id="view-log" class="view page" hidden>
+  <div class="page-head"><h2>Nhật ký làm việc</h2><p>Kuto làm lần lượt từng việc. Việc đang chạy hiện ở trên cùng.</p></div>
+  <div id="job-list"></div>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>

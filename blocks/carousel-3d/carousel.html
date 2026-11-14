@@ -1,0 +1,179 @@
+<!--
+  KHỐI CAROUSEL 3D XOAY (scene HyperFrames)
+  - Chép file này vào <dự án>/compositions/carousel.html, sửa danh sách .car-panel (3–8 tấm, video hoặc ảnh).
+  - Mount từ index.html:
+      <div id="carousel" data-composition-id="carousel" data-composition-src="compositions/carousel.html"
+           data-start="…" data-duration="8" data-track-index="1" data-track-kind="graphics"
+           data-width="1920" data-height="1080"></div>
+  - Kích thước tấm tự tính theo khung hình nên dùng được cho cả 16:9 lẫn 9:16.
+  - Chỉnh nhanh ở khối CONFIG trong <script>: thời lượng mỗi tấm, độ nghiêng, kiểu xoay.
+  - Mỗi <video> phải có data-duration >= thời lượng scene và data-media-start = điểm bắt đầu đoạn muốn lấy.
+  - Đổi id "carousel" (host, root, timeline key, tiền tố car-) nếu dùng 2 carousel trong 1 video.
+-->
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: var(--car-bg, #14121c);
+      font-family: "Montserrat", sans-serif;
+    }
+    #car-glow {
+      position: absolute;
+      inset: -20%;
+      background: radial-gradient(closest-side, var(--car-accent, #ff4f9a) 0%, transparent 70%);
+      opacity: 0.28;
+    }
+    #car-stage {
+      position: absolute;
+      inset: 0;
+      perspective: 2200px;
+      perspective-origin: 50% 46%;
+    }
+    #car-tilt,
+    #car-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+    }
+    .car-panel {
+      position: absolute;
+      overflow: hidden;
+      background: #0b0b10;
+      border: 6px solid #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+    }
+    .car-panel video,
+    .car-panel img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .car-shade {
+      position: absolute;
+      inset: 0;
+      background: #0b0b10;
+    }
+    .car-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 7%;
+      text-align: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 54px;
+      letter-spacing: -0.01em;
+      text-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
+    }
+    .car-label span {
+      display: inline-block;
+      padding: 6px 26px;
+      background: var(--car-accent, #ff4f9a);
+      border-radius: 14px;
+    }
+  </style>
+
+  <div id="root" data-composition-id="carousel" data-width="1920" data-height="1080">
+    <div id="car-glow" data-layout-ignore></div>
+    <div id="car-stage" data-layout-allow-overflow>
+      <div id="car-tilt">
+        <div id="car-ring">
+          <!-- Mỗi tấm: 1 video (hoặc img) + lớp phủ tối. Thêm/bớt tấm tuỳ ý. -->
+          <div class="car-panel" id="car-p1">
+            <video id="car-v1" class="clip" data-start="0" data-duration="8" data-media-start="0" data-track-index="1" src="assets/clip_a.mp4" muted playsinline></video>
+            <div class="car-shade"></div>
+          </div>
+          <div class="car-panel" id="car-p2">
+            <video id="car-v2" class="clip" data-start="0" data-duration="8" data-media-start="0" data-track-index="2" src="assets/clip_b.mp4" muted playsinline></video>
+            <div class="car-shade"></div>
+          </div>
+          <div class="car-panel" id="car-p3">
+            <video id="car-v3" class="clip" data-start="0" data-duration="8" data-media-start="0" data-track-index="3" src="assets/clip_c.mp4" muted playsinline></video>
+            <div class="car-shade"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Nhãn cho từng tấm, hiện khi tấm đó ra trước. Số nhãn = số tấm. -->
+    <div class="car-label clip" id="car-l1" data-start="0" data-duration="8" data-track-index="4"><span>8:00 · Vào ca</span></div>
+    <div class="car-label clip" id="car-l2" data-start="0" data-duration="8" data-track-index="5"><span>10:30 · Họp gấp</span></div>
+    <div class="car-label clip" id="car-l3" data-start="0" data-duration="8" data-track-index="6"><span>17:59 · Deadline</span></div>
+  </div>
+
+  <script>
+    (function () {
+      // ───── CONFIG ─────
+      const CONFIG = {
+        total: 8, // thời lượng scene (giây) = data-duration của host
+        intro: 0.7, // thời gian vòng xoay bay vào
+        turn: 0.75, // thời gian xoay giữa 2 tấm
+        drift: 6, // độ trôi nhẹ (độ) trong lúc dừng ở mỗi tấm
+        tilt: -7, // nghiêng vòng (độ): âm = nhìn từ trên xuống
+        panelRatio: 16 / 9, // tỉ lệ tấm; khung dọc sẽ tự dùng 4:5
+        gap: 70, // khoảng hở giữa các tấm (px)
+        ease: "power3.inOut",
+      };
+      // ──────────────────
+      const root = document.querySelector('[data-composition-id="carousel"]');
+      const W = root.offsetWidth || 1920;
+      const H = root.offsetHeight || 1080;
+      const vertical = H > W;
+      const panels = Array.from(root.querySelectorAll(".car-panel"));
+      const labels = Array.from(root.querySelectorAll(".car-label span"));
+      const n = panels.length;
+      const step = 360 / n;
+      const ratio = vertical ? 4 / 5 : CONFIG.panelRatio;
+      const pw = Math.round(vertical ? W * 0.72 : W * 0.44);
+      const ph = Math.round(pw / ratio);
+      const radius = Math.round((pw + CONFIG.gap) / 2 / Math.tan(Math.PI / n)) + (n < 4 ? 120 : 0);
+
+      panels.forEach((p, i) => {
+        // Tấm thứ i nằm trên vành tròn bán kính `radius` (GSAP không đụng vào transform của tấm)
+        p.style.width = pw + "px";
+        p.style.height = ph + "px";
+        p.style.left = -pw / 2 + "px";
+        p.style.top = -ph / 2 + "px";
+        p.style.transform = "rotateY(" + i * step + "deg) translateZ(" + radius + "px)";
+      });
+      if (vertical) root.querySelectorAll(".car-label").forEach((l) => gsap.set(l, { fontSize: 62, bottom: "24%" }));
+
+      const tl = gsap.timeline({ paused: true });
+      const ring = "#car-ring";
+      const hold = (CONFIG.total - CONFIG.intro) / n;
+
+      gsap.set("#car-tilt", { rotationX: CONFIG.tilt, z: -radius });
+      tl.fromTo(ring, { rotationY: 70, scale: 0.55, opacity: 0 }, { rotationY: 0, scale: 1, opacity: 1, duration: CONFIG.intro, ease: "power3.out" }, 0);
+      tl.fromTo("#car-glow", { scale: 0.6 }, { scale: 1.1, duration: CONFIG.total, ease: "sine.inOut" }, 0);
+
+      panels.forEach((p, i) => {
+        const t0 = CONFIG.intro + i * hold; // lúc tấm i đã ra trước
+        const shade = p.querySelector(".car-shade");
+        const label = labels[i];
+        // xoay tới tấm i (tấm 0 đã ở trước sau intro)
+        if (i > 0) tl.to(ring, { rotationY: -i * step, duration: CONFIG.turn, ease: CONFIG.ease }, t0 - CONFIG.turn);
+        // trôi nhẹ trong lúc dừng
+        const driftDur = hold - (i < n - 1 ? CONFIG.turn : 0.05);
+        tl.to(ring, { rotationY: -i * step - CONFIG.drift, duration: Math.max(0.1, driftDur), ease: "none" }, t0);
+        // sáng tấm đang ở trước, tối các tấm còn lại
+        tl.fromTo(shade, { opacity: 0.55 }, { opacity: 0, duration: 0.35, ease: "power2.out" }, Math.max(0, t0 - 0.3));
+        if (i < n - 1) tl.to(shade, { opacity: 0.55, duration: 0.35, ease: "power2.in" }, t0 + hold - CONFIG.turn);
+        // nhãn
+        if (label) {
+          tl.fromTo(label, { opacity: 0, y: 40, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(2)" }, t0 + 0.05);
+          const out = i < n - 1 ? t0 + hold - CONFIG.turn : CONFIG.total - 0.3;
+          tl.to(label, { opacity: 0, y: -24, duration: 0.22, ease: "power2.in" }, out);
+        }
+      });
+      window.__timelines["carousel"] = tl;
+    })();
+  </script>
+</template>

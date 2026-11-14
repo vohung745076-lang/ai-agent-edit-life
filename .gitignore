@@ -1,0 +1,30 @@
+# Portable runtime (Node 22 + FFmpeg) - recreate with tools/setup.ps1
+.runtime/
+node_modules/
+
+# User footage, renders and work-in-progress projects
+projects/*
+!projects/.gitkeep
+
+# Learned styles: keep the library, skip downloaded reference videos and render output
+styles/_inbox/
+styles/*/source/
+styles/*/analysis/
+styles/*/demo/renders/
+styles/*/demo*/node_modules/
+styles/*/demo*/.hyperframes/
+
+# App runtime data
+app/data/
+
+# User music
+library/music/*
+!library/music/README.txt
+
+# Local Claude settings
+.claude/settings.local.json
+
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
